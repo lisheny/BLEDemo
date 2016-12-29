@@ -18,10 +18,12 @@ public class BleAutoConnectActivity extends AutoConnectActivity {
     private Button btnSendOrder,btnDisconnect,btnConnect;
     private TextView tvShowStatus ;
 
+    //这里的UUID配置是你要连接的蓝牙里特有的，这里展示的是一个血压计的例子
     private String
             myGattService ="0000fff0-0000-1000-8000-00805f9b34fb",
             myWriteCharacteristic = "0000fff2-0000-1000-8000-00805f9b34fb",
             myReadCharcteristic = "0000fff1-0000-1000-8000-00805f9b34fb";
+
     //要扫描的蓝牙的特有服务UUID
     private String scanServiceUUID = "0000fff0-0000-1000-8000-00805f9b34fb";
 
@@ -36,9 +38,6 @@ public class BleAutoConnectActivity extends AutoConnectActivity {
         setMyReadCharcteristic(myReadCharcteristic);
         setScanServiceUUID(scanServiceUUID);
 
-//        setmScanning(true);
-
-
         btnSendOrder = (Button)findViewById(R.id.btn_send_order);
         btnDisconnect = (Button)findViewById(R.id.btn_disconnect);
         btnConnect = (Button)findViewById(R.id.btn_connect);
@@ -48,6 +47,7 @@ public class BleAutoConnectActivity extends AutoConnectActivity {
             @Override
             public void onClick(View v) {
                 if (isConnected()){
+                    //将蓝牙指令以字符串形式输入即可，下面这条指令"ff03F13428" 是例子中让血压计进行测量
                     bluetoothControl("ff03F13428");
                 }else {
                     ToastUtil.showToast(BleAutoConnectActivity.this,"蓝牙未连接");
@@ -57,18 +57,24 @@ public class BleAutoConnectActivity extends AutoConnectActivity {
         btnDisconnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //断开蓝牙
                 disConnect();
             }
         });
         btnConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //连接蓝牙
                 connect();
             }
         });
 
     }
 
+    /**
+     * 重写这个方法获得蓝牙返回的数据
+     * @param data 蓝牙返回的字节数组
+     */
     @Override
     protected void displayData(byte[] data) {
         super.displayData(data);
@@ -80,6 +86,11 @@ public class BleAutoConnectActivity extends AutoConnectActivity {
         }
     }
 
+    /**
+     * 重写这个方法获得蓝牙的连接状态
+     * @param isConnected .
+     * @return  返回蓝牙状态
+     */
     @Override
     protected boolean bleStatus(Boolean isConnected) {
         tvShowStatus.setText("连接状态： "+String.valueOf(isConnected));

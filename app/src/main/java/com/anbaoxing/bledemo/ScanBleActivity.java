@@ -15,6 +15,9 @@ import com.anbaoxing.autoble4_0.ScanActivity;
 
 import java.util.ArrayList;
 
+/**
+ * 扫描蓝牙设备
+ */
 public class ScanBleActivity extends ScanActivity {
 
     private Button btnScan,btnConnect;
@@ -37,6 +40,7 @@ public class ScanBleActivity extends ScanActivity {
                     myProgressBar.setVisibility(View.INVISIBLE);
                     if (mLeDevices.size()>0) btnConnect.setVisibility(View.VISIBLE);
 
+                    //把扫描到的设备show出来
                     String allBle = "";
                     for (int i =0; i<mLeDevices.size();i++ ){
                         allBle = allBle+"Mac地址："+String.valueOf(mLeDevices.get(i).getAddress())+" \n设备名："+
@@ -52,6 +56,7 @@ public class ScanBleActivity extends ScanActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scan_ble);
+
         mLeDevices = new ArrayList<BluetoothDevice>();
 
         btnScan = (Button) findViewById(R.id.btn_scan);
@@ -59,10 +64,10 @@ public class ScanBleActivity extends ScanActivity {
         tvShowBle =(TextView)findViewById(R.id.tv_show_ble);
         myProgressBar = (ProgressBar) findViewById(R.id.my_progressbar);
 
-
         btnScan.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //控制扫描
                 if (ismScanning()) {
                     scanLeDevice(false);
                 } else {
@@ -74,6 +79,7 @@ public class ScanBleActivity extends ScanActivity {
         btnConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //把目标蓝牙信息传到ConnectBleActivity进行连接
                 Intent intent = new Intent(ScanBleActivity.this, ConnectBleActivity.class);
                 intent.putExtra(ConnectBleActivity.EXTRAS_DEVICE_NAME,  mLeDevices.get(0).getName());
                 intent.putExtra(ConnectBleActivity.EXTRAS_DEVICE_ADDRESS,  mLeDevices.get(0).getAddress());
@@ -84,7 +90,7 @@ public class ScanBleActivity extends ScanActivity {
     }
 
     /**
-     * 扫描到的设备信息
+     * 重写这个方法，获得扫描到的设备信息
      *
      * @param device     设备
      * @param rssi       信号
@@ -100,13 +106,14 @@ public class ScanBleActivity extends ScanActivity {
     }
 
     /**
-     * 扫描状态（注意：该方法是异步执行的）
+     * 重写这个方法得到扫描状态（注意：该方法是异步执行的）
      *
      * @param mScanning 扫描状态
      */
     @Override
     protected void scanStatus(Boolean mScanning) {
         super.scanStatus(mScanning);
+
         Message message = new Message();
         Bundle bundle = new Bundle();
         bundle.putBoolean("mScanning", mScanning);

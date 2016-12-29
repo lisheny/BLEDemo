@@ -15,7 +15,6 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import java.util.Timer;
@@ -27,15 +26,18 @@ import java.util.UUID;
  * (自动连接)
  * 控制蓝牙的一个管理Activity
  */
-public class AutoConnectActivity extends AppCompatActivity {
+public class AutoConnectActivity extends BaseActivity {
 
     private final static String TAG = AutoConnectActivity.class.getSimpleName();
     private static final int REQUEST_ENABLE_BT = 1;
 
-    private boolean isConnected = false;               //是否已连接
-    private boolean mScanning = true;                  //true：需要继续扫描，false:停止扫描
+    //是否已连接
+    private boolean isConnected = false;
 
-    private Timer mServiceTimer ;
+    //true：需要继续扫描，false:停止扫描
+    private boolean mScanning = true;
+
+    private Timer mServiceTimer;
     private TimerTask mServiceTimeTask;
 
     private BluetoothAdapter mBluetoothAdapter;
@@ -44,10 +46,14 @@ public class AutoConnectActivity extends AppCompatActivity {
 
     private BluetoothGattService dataInteracctionService;
     private BluetoothGattCharacteristic writeCharacteristic, readCharacteristic;
+
+    //蓝牙操作要用到的UUID，根据不同的蓝牙服务商定的，要在继承这个Activity的子Activity中配置
+    //这里设了默认值仅为示范作用，并不会对调用有任何影响
     private String
-            myGattService ="0000fff0-0000-1000-8000-00805f9b34fb",
+            myGattService = "0000fff0-0000-1000-8000-00805f9b34fb",
             myWriteCharacteristic = "0000fff2-0000-1000-8000-00805f9b34fb",
             myReadCharcteristic = "0000fff1-0000-1000-8000-00805f9b34fb";
+
     //要扫描的蓝牙的特有服务UUID
     private String scanServiceUUID = "0000fff0-0000-1000-8000-00805f9b34fb";
 
@@ -61,7 +67,8 @@ public class AutoConnectActivity extends AppCompatActivity {
 
     /**
      * 想要开启扫描的时候设为true
-     * @param mScanning 布尔值
+     *
+     * @param mScanning 布尔值，是否扫描
      */
     public void setmScanning(boolean mScanning) {
         this.mScanning = mScanning;
@@ -73,6 +80,7 @@ public class AutoConnectActivity extends AppCompatActivity {
 
     /**
      * 设置想要连接的指定的蓝牙Mac地址
+     *
      * @param mDeviceAddress 蓝牙Mac地址
      */
     public void setmDeviceAddress(String mDeviceAddress) {
@@ -85,6 +93,7 @@ public class AutoConnectActivity extends AppCompatActivity {
 
     /**
      * 设置包含读和写特征值的服务UUID
+     *
      * @param myGattService 服务UUID
      */
     public void setMyGattService(String myGattService) {
@@ -97,6 +106,7 @@ public class AutoConnectActivity extends AppCompatActivity {
 
     /**
      * 设置写入蓝牙指令的UUID
+     *
      * @param myWriteCharacteristic 写入蓝牙指令的UUID
      */
     public void setMyWriteCharacteristic(String myWriteCharacteristic) {
@@ -109,6 +119,7 @@ public class AutoConnectActivity extends AppCompatActivity {
 
     /**
      * 设置读取蓝牙设备传输数据的UUID
+     *
      * @param myReadCharcteristic 传输数据的UUID
      */
     public void setMyReadCharcteristic(String myReadCharcteristic) {
@@ -120,16 +131,18 @@ public class AutoConnectActivity extends AppCompatActivity {
     }
 
     /**
-     *
      * 设置要扫描的蓝牙设备特有的服务的UUID
+     *
      * @param scanServiceUUID 服务的UUID
      */
     public void setScanServiceUUID(String scanServiceUUID) {
         this.scanServiceUUID = scanServiceUUID;
     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         //注册广播
         registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 
@@ -147,7 +160,6 @@ public class AutoConnectActivity extends AppCompatActivity {
         if (mBluetoothAdapter == null) {
             ToastUtil.showToast(AutoConnectActivity.this, "手机不支持Ble");
             finish();
-            return;
         }
     }
 
@@ -161,22 +173,32 @@ public class AutoConnectActivity extends AppCompatActivity {
                 startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
             }
         }
+
         //绑定服务
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
 
         //如果还需要继续扫描或蓝牙未连接则
         //延时ns后执行mServiceTimeTask里的scanLeDevice扫描
-        //周期为每隔n秒一次
-        if (ismScanning()) {
+        if (mServiceTimer == null) {
             mServiceTimer = new Timer();
             mServiceTimeTask = new TimerTask() {
                 @Override
                 public void run() {
-                    scanLeDevice(ismScanning());
+                    if (isConnected) {
+                        scanLeDevice(false);
+                    } else {
+                        if (mScanning) {
+                            scanLeDevice(true);
+                            mScanning = false;
+                        } else {
+                            scanLeDevice(false);
+                            mScanning = true;
+                        }
+                    }
                 }
             };
-            mServiceTimer.schedule(mServiceTimeTask, 5000, 5000);
+            mServiceTimer.schedule(mServiceTimeTask, 5000, 10000);
         }
 
         if (mBluetoothLeService != null) {
@@ -188,13 +210,19 @@ public class AutoConnectActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+
         scanLeDevice(false);
+
         mServiceTimer.cancel();
+        mServiceTimeTask.cancel();
+        mServiceTimer = null;
+        mServiceTimeTask = null;
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
         mBluetoothLeService.disconnect();
         unbindService(mServiceConnection);
         mBluetoothLeService = null;
@@ -206,6 +234,7 @@ public class AutoConnectActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
         // User chose not to enable Bluetooth.   用户选择不支持蓝牙。
         if (requestCode == REQUEST_ENABLE_BT && resultCode == Activity.RESULT_CANCELED) {
             finish();
@@ -237,40 +266,37 @@ public class AutoConnectActivity extends AppCompatActivity {
     /**
      * 断开蓝牙
      */
-    public void disConnect(){
+    public void disConnect() {
         mBluetoothLeService.disconnect();
     }
 
     /**
      * 连接蓝牙
      */
-    public void connect(){
+    public void connect() {
         mBluetoothLeService.connect(mDeviceAddress);
     }
 
     private void scanLeDevice(final boolean enable) {
-        if (enable) {
-            // Stops scanning after a pre-defined scan period.  停止扫描后一个预定义的扫描周期。
-//            mHandler.postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-////                    mBluetoothAdapter.stopLeScan(mLeScanCallback);
-////                    Logger.d("ble", "停止扫描");
-//                }
-//            }, SCAN_PERIOD);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (enable) {
+                    //string类型转化为UUID，开始搜索时仅仅索搜拥有该UUID服务的设备
+                    //特别说明：startLeScan(new UUID[]{uuids}, mLeScanCallback)
+                    //这个方法需要Android 5.0以上，所以5.0以下但支持蓝牙4.0的话是
+                    //扫描不到的
+                    String uuid = getScanServiceUUID();
+                    UUID uuids = UUID.fromString(uuid);
+                    mBluetoothAdapter.startLeScan(new UUID[]{uuids}, mLeScanCallback);
+                    Log.d("ble", "正在扫描");
+                } else {
+                    mBluetoothAdapter.stopLeScan(mLeScanCallback);
+                    Log.d("ble", "停止扫描");
+                }
+            }
+        }).start();
 
-            //string类型转化为UUID，开始搜索时仅仅索搜拥有该UUID服务的设备
-            //特别说明：startLeScan(new UUID[]{uuids}, mLeScanCallback)
-            //这个方法需要Android 5.0以上，所以5.0以下但支持蓝牙4.0的话是
-            //扫描不到的
-            String uuid = getScanServiceUUID();
-            UUID uuids = UUID.fromString(uuid);
-            mBluetoothAdapter.startLeScan(new UUID[]{uuids}, mLeScanCallback);
-            Log.d("ble", "正在扫描");
-        } else {
-            mBluetoothAdapter.stopLeScan(mLeScanCallback);
-            Log.d("ble", "停止扫描");
-        }
     }
 
     /**
@@ -287,7 +313,7 @@ public class AutoConnectActivity extends AppCompatActivity {
 
                     mScanning = false;
                     scanLeDevice(mScanning);
-                    Log.i(TAG,"扫描到的设备："+getmDeviceAddress());
+                    Log.i(TAG, "扫描到的设备：" + getmDeviceAddress());
 
                     //扫描到设备，发送广播进行连接
                     if (getmDeviceAddress() != null) {
@@ -300,7 +326,7 @@ public class AutoConnectActivity extends AppCompatActivity {
     };
 
     /**
-     * Code to manage Service lifecycle.  代码管理服务生命周期。
+     * Code to manage Service lifecycle.  管理服务生命周期。
      */
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
@@ -310,6 +336,7 @@ public class AutoConnectActivity extends AppCompatActivity {
                 Log.e("MianActivity", "Unable to initialize Bluetooth");
                 finish();
             }
+
             // Automatically connects to the device upon successful start-up initialization.
             // 自动连接到设备成功启动初始化
             mBluetoothLeService.connect(getmDeviceAddress());
@@ -338,19 +365,10 @@ public class AutoConnectActivity extends AppCompatActivity {
      */
     protected void displayData(byte[] data) {
 
-//        if (data != null) {
-//            String s = BleUtils.byte2HexStr(data);
-//            Log.i("displayData---->", "蓝牙返回数据：" + s);
-//            //转化为二进制字符串处理
-////            String bity2binStr = BleUtils.byte2BinStr(data);
-//        }
     }
 
-    protected boolean bleStatus(Boolean isConnected){
-        if (isConnected){
-            return true;
-        }
-        return false;
+    protected boolean bleStatus(Boolean isConnected) {
+        return isConnected;
     }
 
     /**
@@ -368,8 +386,8 @@ public class AutoConnectActivity extends AppCompatActivity {
                 isConnected = true;
                 bleStatus(true);
 
-                 Log.i(TAG,"蓝牙连接成功");
-                ToastUtil.showToast(AutoConnectActivity.this,"蓝牙连接成功");
+                Log.i(TAG, "蓝牙连接成功");
+                ToastUtil.showToast(AutoConnectActivity.this, "蓝牙连接成功");
             }
 
             /*
@@ -379,7 +397,7 @@ public class AutoConnectActivity extends AppCompatActivity {
                 isConnected = false;
                 bleStatus(false);
                 Log.i(TAG, "蓝牙已断开连接");
-                ToastUtil.showToast(AutoConnectActivity.this,"蓝牙已断开连接");
+                ToastUtil.showToast(AutoConnectActivity.this, "蓝牙已断开连接");
             }
 
             /*
@@ -388,8 +406,9 @@ public class AutoConnectActivity extends AppCompatActivity {
             if (BluetoothLeService.SCAN_BLE.equals(action)) {
                 mBluetoothLeService.connect(getmDeviceAddress());
             }
-           /*
-           读取数据
+
+            /*
+            读取数据
             */
             if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action))
 
@@ -397,6 +416,7 @@ public class AutoConnectActivity extends AppCompatActivity {
                 byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
                 displayData(data);
             }
+
             /*
             找到Gatt服务
              */
@@ -404,16 +424,18 @@ public class AutoConnectActivity extends AppCompatActivity {
                 try {
                     //蓝牙数据交互服务UUID
                     dataInteracctionService = mBluetoothLeService.getSupportedGattServices(UUID.fromString(getMyGattService()));
+
                     //写数据characteristic UUID：
                     writeCharacteristic = dataInteracctionService.getCharacteristic(UUID.fromString(getMyWriteCharacteristic()));
+
                     //读数据characteristic UUID：
                     readCharacteristic = dataInteracctionService.getCharacteristic(UUID.fromString(getMyReadCharcteristic()));
+
                     //打开读数据监听
                     mBluetoothLeService.setCharacteristicNotification(readCharacteristic, true);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
         }
     };
 }

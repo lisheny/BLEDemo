@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 /**
@@ -17,7 +16,7 @@ import android.util.Log;
  * 扫描设备
  * Created by LENOVO on 2016/12/16.
  */
-public class ScanActivity extends AppCompatActivity {
+public class ScanActivity extends BaseActivity {
 
     private BluetoothAdapter mBluetoothAdapter;
 
@@ -33,6 +32,7 @@ public class ScanActivity extends AppCompatActivity {
     private Handler mHandler;
 
     private static final int REQUEST_ENABLE_BT = 1;
+
     // 定义扫描周期10s
     private static final long SCAN_PERIOD = 10000;
 
@@ -55,7 +55,6 @@ public class ScanActivity extends AppCompatActivity {
         if (mBluetoothAdapter == null) {
             ToastUtil.showToast(ScanActivity.this, "手机不支持Ble");
             finish();
-            return;
         }
     }
 
@@ -70,6 +69,7 @@ public class ScanActivity extends AppCompatActivity {
                 startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
             }
         }
+
         scanLeDevice(true);
     }
 
@@ -94,25 +94,31 @@ public class ScanActivity extends AppCompatActivity {
      * @param enable 开始/关闭 扫描
      */
     public void scanLeDevice(final boolean enable) {
-        if (enable) {
-            // 扫描周期10s 过去之后停止扫描
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mScanning = false;
-                    mBluetoothAdapter.stopLeScan(mLeScanCallback);
-                    scanStatus(mScanning);
-                }
-            }, SCAN_PERIOD);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (enable) {
+                    // 扫描周期10s 过去之后停止扫描
+                    mHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            mScanning = false;
+                            scanStatus(false);
+                            mBluetoothAdapter.stopLeScan(mLeScanCallback);
+                        }
+                    }, SCAN_PERIOD);
 
-            mScanning = true;
-            mBluetoothAdapter.startLeScan(mLeScanCallback);
-            scanStatus(mScanning);
-        } else {
-            mScanning = false;
-            mBluetoothAdapter.stopLeScan(mLeScanCallback);
-            scanStatus(mScanning);
-        }
+                    //这里可以用另一个方法，扫描特定蓝牙：startLeScan(new UUID[]{uuids}, mLeScanCallback)
+                    mScanning = true;
+                    scanStatus(true);
+                    mBluetoothAdapter.startLeScan(mLeScanCallback);
+                } else {
+                    mScanning = false;
+                    scanStatus(false);
+                    mBluetoothAdapter.stopLeScan(mLeScanCallback);
+                }
+            }
+        }).start();
     }
 
     /**

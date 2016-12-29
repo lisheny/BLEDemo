@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 
 /**
  * 小小工具类
- * (String.valueOf(j /(float) (mBloodDatasBeens.size() / 7))).length() == 3
+ *
  */
 public class BleUtils {
 

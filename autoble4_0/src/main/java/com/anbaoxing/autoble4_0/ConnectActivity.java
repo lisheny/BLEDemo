@@ -12,7 +12,6 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import java.util.UUID;
@@ -22,7 +21,7 @@ import java.util.UUID;
  * 连接控制蓝牙
  * Created by LENOVO on 2016/12/16.
  */
-public class ConnectActivity extends AppCompatActivity {
+public class ConnectActivity extends BaseActivity {
 
     private static final int REQUEST_ENABLE_BT = 1;
     private final static String TAG = AutoConnectActivity.class.getSimpleName();
@@ -31,7 +30,8 @@ public class ConnectActivity extends AppCompatActivity {
         return isConnected;
     }
 
-    private boolean isConnected = false;               //是否已连接
+    //是否已连接
+    private boolean isConnected = false;
     private String mDeviceName;
     private BluetoothAdapter mBluetoothAdapter;
 
@@ -71,10 +71,14 @@ public class ConnectActivity extends AppCompatActivity {
 
     private BluetoothGattService dataInteracctionService;
     private BluetoothGattCharacteristic writeCharacteristic, readCharacteristic;
+
+    //蓝牙操作要用到的UUID，根据不同的蓝牙服务商定的，要在继承这个Activity的子Activity中配置
+    //这里设了默认值仅为示范作用，并不会对调用有任何影响
     private String
             myGattService = "0000fff0-0000-1000-8000-00805f9b34fb",
             myWriteCharacteristic = "0000fff2-0000-1000-8000-00805f9b34fb",
             myReadCharcteristic = "0000fff1-0000-1000-8000-00805f9b34fb";
+
     //要扫描的蓝牙的特有服务UUID
     private String scanServiceUUID = "0000fff0-0000-1000-8000-00805f9b34fb";
 
@@ -145,7 +149,7 @@ public class ConnectActivity extends AppCompatActivity {
             byte[] bytes = BleUtils.getHexBytes(wriDate);
             writeCharacteristic.setValue(bytes);
             mBluetoothLeService.writeCharacteristic(writeCharacteristic);
-            Log.i("指令写入成功：", wriDate);
+            Log.i("指令写入中：", wriDate);
             return true;
         } catch (Exception e) {
             Log.e("指令写入不成功：", wriDate + " ==> " + e);
@@ -174,19 +178,10 @@ public class ConnectActivity extends AppCompatActivity {
      */
     protected void displayData(byte[] data) {
 
-//        if (data != null) {
-//            String s = BleUtils.byte2HexStr(data);
-//            Log.i("displayData---->", "蓝牙返回数据：" + s);
-//            //转化为二进制字符串处理
-////            String bity2binStr = BleUtils.byte2BinStr(data);
-//        }
     }
 
     protected boolean bleStatus(Boolean isConnected) {
-        if (isConnected) {
-            return true;
-        }
-        return false;
+        return isConnected;
     }
 
     /**
@@ -230,7 +225,7 @@ public class ConnectActivity extends AppCompatActivity {
             final String action = intent.getAction();
 
             /*
-           蓝牙连接成功时接收到的广播
+            蓝牙连接成功时接收到的广播
             */
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
                 isConnected = true;
@@ -246,6 +241,7 @@ public class ConnectActivity extends AppCompatActivity {
             if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 isConnected = false;
                 bleStatus(false);
+
                 Log.i(TAG, "蓝牙已断开连接");
                 ToastUtil.showToast(ConnectActivity.this, "蓝牙已断开连接");
             }
@@ -267,10 +263,13 @@ public class ConnectActivity extends AppCompatActivity {
                 try {
                     //蓝牙数据交互服务UUID
                     dataInteracctionService = mBluetoothLeService.getSupportedGattServices(UUID.fromString(getMyGattService()));
+
                     //写数据characteristic UUID：
                     writeCharacteristic = dataInteracctionService.getCharacteristic(UUID.fromString(getMyWriteCharacteristic()));
+
                     //读数据characteristic UUID：
                     readCharacteristic = dataInteracctionService.getCharacteristic(UUID.fromString(getMyReadCharcteristic()));
+
                     //打开读数据监听
                     mBluetoothLeService.setCharacteristicNotification(readCharacteristic, true);
                 } catch (Exception e) {

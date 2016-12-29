@@ -76,6 +76,7 @@ public class BluetoothLeService extends Service {
                 mConnectionState = STATE_CONNECTED;
                 broadcastUpdate(intentAction);
                 Log.i(TAG, "Connected to GATT server.");
+
                 // Attempts to discover services after successful connection.
                 //连接成功后试图发现服务。
                 Log.i(TAG, "Attempting to start service discovery:" +
@@ -122,14 +123,14 @@ public class BluetoothLeService extends Service {
         final Intent intent = new Intent(action);
 
         byte[] data = characteristic.getValue();
-//        String s = ApplicationUtils.byte2HexStr(heartRate);
+        //String s = ApplicationUtils.byte2HexStr(heartRate);
         //String data = ApplicationUtils.print10(s);
         intent.putExtra(EXTRA_DATA, data);
         sendBroadcast(intent);
     }
 
     public class LocalBinder extends Binder {
-        public BluetoothLeService getService() {
+        BluetoothLeService getService() {
             return BluetoothLeService.this;
         }
     }
