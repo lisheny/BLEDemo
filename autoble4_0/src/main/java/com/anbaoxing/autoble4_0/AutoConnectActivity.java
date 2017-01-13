@@ -43,6 +43,7 @@ public class AutoConnectActivity extends BaseActivity {
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothLeService mBluetoothLeService;
     private String mDeviceAddress;
+    private String mDeviceName = "LEPU BP";
 
     private BluetoothGattService dataInteracctionService;
     private BluetoothGattCharacteristic writeCharacteristic, readCharacteristic;
@@ -56,6 +57,14 @@ public class AutoConnectActivity extends BaseActivity {
 
     //要扫描的蓝牙的特有服务UUID
     private String scanServiceUUID = "0000fff0-0000-1000-8000-00805f9b34fb";
+
+    public String getmDeviceName() {
+        return mDeviceName;
+    }
+
+    public void setmDeviceName(String mDeviceName) {
+        this.mDeviceName = mDeviceName;
+    }
 
     public boolean isConnected() {
         return isConnected;
@@ -168,10 +177,8 @@ public class AutoConnectActivity extends BaseActivity {
         super.onResume();
         // 为了确保设备上蓝牙能使用, 如果当前蓝牙设备没启用,弹出对话框向用户要求授予权限来启用
         if (!mBluetoothAdapter.isEnabled()) {
-            if (!mBluetoothAdapter.isEnabled()) {
-                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-            }
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
 
         //绑定服务
@@ -198,7 +205,7 @@ public class AutoConnectActivity extends BaseActivity {
                     }
                 }
             };
-            mServiceTimer.schedule(mServiceTimeTask, 5000, 10000);
+            mServiceTimer.schedule(mServiceTimeTask, 5000, 5000);
         }
 
         if (mBluetoothLeService != null) {
@@ -286,9 +293,10 @@ public class AutoConnectActivity extends BaseActivity {
                     //特别说明：startLeScan(new UUID[]{uuids}, mLeScanCallback)
                     //这个方法需要Android 5.0以上，所以5.0以下但支持蓝牙4.0的话是
                     //扫描不到的
-                    String uuid = getScanServiceUUID();
-                    UUID uuids = UUID.fromString(uuid);
-                    mBluetoothAdapter.startLeScan(new UUID[]{uuids}, mLeScanCallback);
+//                    String uuid = getScanServiceUUID();
+//                    UUID uuids = UUID.fromString(uuid);
+//                    mBluetoothAdapter.startLeScan(new UUID[]{uuids}, mLeScanCallback);
+                    mBluetoothAdapter.startLeScan(mLeScanCallback);
                     Log.d("ble", "正在扫描");
                 } else {
                     mBluetoothAdapter.stopLeScan(mLeScanCallback);
@@ -309,16 +317,23 @@ public class AutoConnectActivity extends BaseActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    mDeviceAddress = device.getAddress();
+                    try {
+                        Log.i("设备名：", device.getName());
+                        if (device.getName().equals(getmDeviceName())) {
+                            mDeviceAddress = device.getAddress();
 
-                    mScanning = false;
-                    scanLeDevice(mScanning);
-                    Log.i(TAG, "扫描到的设备：" + getmDeviceAddress());
+                            mScanning = false;
+                            scanLeDevice(mScanning);
+                            Log.i(TAG, "扫描到的设备：" + getmDeviceAddress());
 
-                    //扫描到设备，发送广播进行连接
-                    if (getmDeviceAddress() != null) {
-                        Intent intent = new Intent(BluetoothLeService.SCAN_BLE);
-                        sendBroadcast(intent);
+                            //扫描到设备，发送广播进行连接
+                            if (getmDeviceAddress() != null) {
+                                Intent intent = new Intent(BluetoothLeService.SCAN_BLE);
+                                sendBroadcast(intent);
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
             });

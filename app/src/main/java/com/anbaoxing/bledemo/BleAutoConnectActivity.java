@@ -18,6 +18,7 @@ public class BleAutoConnectActivity extends AutoConnectActivity {
     private Button btnSendOrder,btnDisconnect,btnConnect;
     private TextView tvShowStatus ;
 
+    private String mDeviceName = "LEPU BP";
     //这里的UUID配置是你要连接的蓝牙里特有的，这里展示的是一个血压计的例子
     private String
             myGattService ="0000fff0-0000-1000-8000-00805f9b34fb",
@@ -33,6 +34,7 @@ public class BleAutoConnectActivity extends AutoConnectActivity {
         setContentView(R.layout.activity_main);
 
         //调用蓝牙功能必须在这里配置好UUID
+        setmDeviceName(mDeviceName);
         setMyGattService(myGattService);
         setMyWriteCharacteristic(myWriteCharacteristic);
         setMyReadCharcteristic(myReadCharcteristic);
