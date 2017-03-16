@@ -72,6 +72,11 @@ public class BluetoothLeService extends Service {
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             String intentAction;
             if (newState == BluetoothProfile.STATE_CONNECTED) {
+                //蓝牙返回 133 状态导致连接时间很长的处理方法
+                if (status == 133) {
+                    close();
+                }
+
                 intentAction = ACTION_GATT_CONNECTED;
                 mConnectionState = STATE_CONNECTED;
                 broadcastUpdate(intentAction);
@@ -228,6 +233,9 @@ public class BluetoothLeService extends Service {
         }
         mBluetoothGatt.disconnect();
         Log.i(TAG," mBluetoothGatt.disconnect()");
+
+        //调用 close() 方法有助于下次快速连接蓝牙
+        close();
     }
 
     /**

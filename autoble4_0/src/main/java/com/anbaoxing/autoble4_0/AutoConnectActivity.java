@@ -328,6 +328,12 @@ public class AutoConnectActivity extends BaseActivity {
 
                             //扫描到设备，发送广播进行连接
                             if (getmDeviceAddress() != null) {
+
+                                //连接一个已存在的蓝牙通常是比较慢的，所以清理掉，建立新连接
+                                if (mBluetoothLeService.mBluetoothGatt != null){
+                                    mBluetoothLeService.close();
+                                }
+
                                 Intent intent = new Intent(BluetoothLeService.SCAN_BLE);
                                 sendBroadcast(intent);
                             }
@@ -449,7 +455,8 @@ public class AutoConnectActivity extends BaseActivity {
                     //打开读数据监听
                     mBluetoothLeService.setCharacteristicNotification(readCharacteristic, true);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Log.e("ConnectActivity", "无法配对读写特征值，请校正");
+                    ToastUtil.showToast( AutoConnectActivity.this, "无法配对读写特征值，请校正");
                 }
         }
     };

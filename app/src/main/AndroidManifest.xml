@@ -15,9 +15,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".BleAutoConnectActivity" />
-        <activity android:name=".ScanBleActivity" />
-        <activity android:name=".ConnectBleActivity"></activity>
+        <activity
+            android:name=".BleAutoConnectActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ScanBleActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ConnectBleActivity"
+            android:screenOrientation="portrait"></activity>
     </application>
 
 </manifest>

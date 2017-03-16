@@ -273,8 +273,8 @@ public class ConnectActivity extends BaseActivity {
                     //打开读数据监听
                     mBluetoothLeService.setCharacteristicNotification(readCharacteristic, true);
                 } catch (Exception e) {
-                    Log.e("ConnectActivity", "无法配对读写特征值");
-                    ToastUtil.showToast(ConnectActivity.this, "无法配对读写特征值");
+                    Log.e("ConnectActivity", "无法配对读写特征值，请校正");
+                    ToastUtil.showToast(ConnectActivity.this, "无法配对读写特征值，请校正");
                 }
 
         }
