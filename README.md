@@ -29,10 +29,10 @@
            setMyReadCharcteristic(myReadCharcteristic);
            setScanServiceUUID(scanServiceUUID);
            } 
-发送指令：`bluetoothControl("ff03F13428")`； </br>
-调用连接方法 `connect()`；</br>
-调用断开连接方法 `disConnect()`；</br>
-重写 `displayData(byte[] data)` 方法，获得蓝牙返回的数据；</br>
+   发送指令：`bluetoothControl("ff03F13428")`； </br>
+   调用连接方法 `connect()`；</br>
+   调用断开连接方法 `disConnect()`；</br>
+   重写 `displayData(byte[] data)` 方法，获得蓝牙返回的数据；</br>
 4. 完成。
 
 ###### 关于自动连接，只是将扫描和连接结合起来而已，同样新建一个自动连接的 Activity 继承 `AutoConnectActivity` ，配置和 `ConnectActivity` 差不多。
