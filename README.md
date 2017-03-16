@@ -35,9 +35,9 @@
 重写 `displayData(byte[] data)` 方法，获得蓝牙返回的数据；</br>
 4. 完成。
 
-######关于自动连接，只是将扫描和连接结合起来而已，同样新建一个自动连接的 Activity 继承 `AutoConnectActivity` ，配置和 `ConnectActivity` 差不多。
+###### 关于自动连接，只是将扫描和连接结合起来而已，同样新建一个自动连接的 Activity 继承 `AutoConnectActivity` ，配置和 `ConnectActivity` 差不多。
 
-#####蓝牙开发坑多开发过的人都知道，下面罗列出一些大坑，请查收：↓↓↓↓↓↓
+###### 蓝牙开发坑多开发过的人都知道，下面罗列出一些大坑，请查收：↓↓↓↓↓↓
 
 [Android BLE开发中踩过的坑](http://www.jianshu.com/p/d0eedd17f2df)
 
