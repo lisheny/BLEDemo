@@ -161,6 +161,7 @@ public class ConnectActivity extends BaseActivity {
      * 断开蓝牙
      */
     public void disConnect() {
+        bleStatus(false);
         mBluetoothLeService.disconnect();
     }
 
@@ -212,6 +213,7 @@ public class ConnectActivity extends BaseActivity {
         intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
         intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
         intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
+        intentFilter.addAction(BluetoothLeService.STATUS_133);
 
         return intentFilter;
     }
@@ -224,6 +226,12 @@ public class ConnectActivity extends BaseActivity {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
 
+            /**
+             * 连接错误 133 状态
+             */
+            if (BluetoothLeService.STATUS_133.equals(action)) {
+                ToastUtil.showToast(ConnectActivity.this,"连接失败 状态 133 ，请重连");
+            }
             /*
             蓝牙连接成功时接收到的广播
             */

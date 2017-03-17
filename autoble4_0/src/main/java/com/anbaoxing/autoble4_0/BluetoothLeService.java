@@ -61,6 +61,7 @@ public class BluetoothLeService extends Service {
     public final static String ACTION_DATA_AVAILABLE = "com.anbaoxing.autoble4_0.ACTION_DATA_AVAILABLE";
     public final static String EXTRA_DATA = "com.anbaoxing.autoble4_0.EXTRA_DATA";
     public final static String SCAN_BLE = "com.anbaoxing.autoble4_0.SCAN_BLE";
+    public final static String STATUS_133 = "com.anbaoxing.autoble4_0.STATUS_133";
 
     public static String CLIENT_CHARACTERISTIC_CONFIG ="00002902-0000-1000-8000-00805f9b34fb";
 
@@ -71,11 +72,17 @@ public class BluetoothLeService extends Service {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             String intentAction;
+            Log.i("蓝牙状态：","status:"+status+" newStatus:"+newState);
+
+            //蓝牙返回 133 状态导致连接时间很长的处理方法
+            if (status == 133) {
+                intentAction = STATUS_133;
+                broadcastUpdate(intentAction);
+                Log.e(TAG,"连接失败 状态 133 ，请重连");
+                close();
+            }
+
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                //蓝牙返回 133 状态导致连接时间很长的处理方法
-                if (status == 133) {
-                    close();
-                }
 
                 intentAction = ACTION_GATT_CONNECTED;
                 mConnectionState = STATE_CONNECTED;
@@ -88,7 +95,7 @@ public class BluetoothLeService extends Service {
                         mBluetoothGatt.discoverServices());
 
 
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED && status != 133) {
                 intentAction = ACTION_GATT_DISCONNECTED;
                 mConnectionState = STATE_DISCONNECTED;
                 Log.i(TAG, "Disconnected from GATT server.");
@@ -231,11 +238,13 @@ public class BluetoothLeService extends Service {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
+
         mBluetoothGatt.disconnect();
         Log.i(TAG," mBluetoothGatt.disconnect()");
 
         //调用 close() 方法有助于下次快速连接蓝牙
         close();
+
     }
 
     /**
